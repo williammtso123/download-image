@@ -1,0 +1,156 @@
+# This is a sample Python script.
+
+# Press ⌃R to execute it or replace it with your code.
+# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+
+
+# after elimination, only "cookie" remains
+url = 'https://wd.imgix.net/image/foR0vJZKULb5AGJExlazy1xYDgI2/U5OHzQL4tEKFr6OFIxWK.jpg?auto=format&w=40'
+headers = {
+	# 'Accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+	# 'Accept-Encoding': 'gzip, deflate, br',
+	# 'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8,zh-TW;q=0.7,zh-CN;q=0.6,zh;q=0.5',
+	# 'Cache-Control': 'no-cache',
+	# 'Connection': 'keep-alive',
+	#  'Cookie': 'None'
+	# 'Host': 'atlascloud-eu.psionline.com',
+	# 'Pragma': 'no-cache',
+	# 'Referer': 'https://atlascloud-eu.psionline.com/phoenix/s/lw/test.html',
+	# 'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="100", "Microsoft Edge";v="100"',
+	# 'sec-ch-ua-mobile': '?0',
+	# 'sec-ch-ua-platform': '"Windows"',
+	# 'Sec-Fetch-Dest': 'image',
+	# 'Sec-Fetch-Mode': 'no-cors',
+	# 'Sec-Fetch-Site': 'same-origin',
+	# 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36 Edg/100.0.1185.39'
+}
+
+# https://stackoverflow.com/questions/16694907/download-large-file-in-python-with-requests
+# with requests.get(url, stream=True, headers=headers) as res:
+#	print(res.status_code)
+#	res.raise_for_status()
+#	with open('test.png', 'wb') as f:
+#		for chunk in res.iter_content(chunk_size=8192):
+#			f.write(chunk)
+
+#https://www.geeksforgeeks.org/how-to-download-all-images-from-a-web-page-in-python/
+from bs4 import *
+import requests
+import os
+
+
+# CREATE FOLDER
+def folder_create(images):
+	try:
+		folder_name = input("Enter Folder Name:- ")
+		# folder creation
+		os.mkdir(folder_name)
+
+	# if folder exists with that name, ask another name
+	except:
+		print("Folder Exist with that name!")
+		folder_create()
+
+	# image downloading start
+	download_images(images, folder_name)
+
+
+# DOWNLOAD ALL IMAGES FROM THAT URL
+def download_images(images, folder_name):
+	# initial count is zero
+	count = 0
+
+	# print total images found in URL
+	print(f"Total {len(images)} Image Found!")
+
+	# checking if images is not zero
+	if len(images) != 0:
+		for i, image in enumerate(images):
+			# From image tag ,Fetch image Source URL
+
+			# 1.data-srcset
+			# 2.data-src
+			# 3.data-fallback-src
+			# 4.src
+
+			# Here we will use exception handling
+
+			# first we will search for "data-srcset" in img tag
+			try:
+				# In image tag ,searching for "data-srcset"
+				image_link = image["data-srcset"]
+
+			# then we will search for "data-src" in img
+			# tag and so on..
+			except:
+				try:
+					# In image tag ,searching for "data-src"
+					image_link = image["data-src"]
+				except:
+					try:
+						# In image tag ,searching for "data-fallback-src"
+						image_link = image["data-fallback-src"]
+					except:
+						try:
+							# In image tag ,searching for "src"
+							image_link = image["src"]
+
+						# if no Source URL found
+						except:
+							pass
+
+			# After getting Image Source URL
+			# We will try to get the content of image
+			try:
+				r = requests.get(image_link).content
+				try:
+
+					# possibility of decode
+					r = str(r, 'utf-8')
+
+				except UnicodeDecodeError:
+
+					# After checking above condition, Image Download start
+					with open(f"{folder_name}/images{i + 1}.jpg", "wb+") as f:
+						f.write(r)
+
+					# counting number of image downloaded
+					count += 1
+			except:
+				pass
+
+		# There might be possible, that all
+		# images not download
+		# if all images download
+		if count == len(images):
+			print("All Images Downloaded!")
+
+		# if all images not download
+		else:
+			print(f"Total {count} Images Downloaded Out of {len(images)}")
+
+
+# MAIN FUNCTION START
+def main(url):
+	# content of URL
+	r = requests.get(url)
+
+	# Parse HTML Code
+	soup = BeautifulSoup(r.text, 'html.parser')
+
+	# find all images in URL
+	images = soup.findAll('img')
+
+	# Call folder create function
+	folder_create(images)
+
+
+# take url
+url = input("Enter URL:- ")
+
+# CALL MAIN FUNCTION
+main(url)
+
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+
